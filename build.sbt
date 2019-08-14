@@ -97,9 +97,14 @@ lazy val hwacha = (project in file("generators/hwacha"))
 
 lazy val boom = (project in file("generators/boom"))
   .dependsOn(rocketchip)
+  .dependsOn(beagleutils)
   .settings(commonSettings)
 
 lazy val tapeout = conditionalDependsOn(project in file("./tools/barstools/tapeout/"))
+  .dependsOn(beagleutils)
+  .settings(commonSettings)
+
+lazy val beagleutils = conditionalDependsOn(project in file("./tools/barstools/beagleutils/"))
   .settings(commonSettings)
 
 lazy val mdf = (project in file("./tools/barstools/mdf/scalalib/"))
