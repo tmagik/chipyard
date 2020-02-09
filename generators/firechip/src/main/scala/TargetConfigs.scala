@@ -94,10 +94,18 @@ class WithScalaTestFeatures extends Config((site, here, up) => {
 // FASED Config Aliases. This to enable config generation via "_" concatenation
 // which requires that all config classes be defined in the same package
 class DDR3FRFCFS extends FRFCFS16GBQuadRank
+class DDR3FRFCFSDiv2 extends FRFCFS16GBQuadRank(clockDiv=2)
 class DDR3FRFCFSLLC4MB extends FRFCFS16GBQuadRankLLC4MB
 
 // L2 Config Aliases. For use with "_" concatenation
 class L2SingleBank512K extends freechips.rocketchip.subsystem.WithInclusiveCache
+
+class L2QuadBank2M extends freechips.rocketchip.subsystem.WithInclusiveCache(
+    nBanks = 4,
+    nWays = 16,
+    capacityKB = 2048,
+    subBankingFactor = 8,
+    outerLatencyCycles = 30)
 
 /*******************************************************************************
 * Full TARGET_CONFIG configurations. These set parameters of the target being
@@ -165,6 +173,43 @@ class FireSimRocketChipSha3L2PrintfConfig extends Config(
   new sha3.WithSha3Accel ++
   new WithNBigCores(1) ++
   new FireSimRocketChipConfig)
+
+// SiFive FSDK configs
+class FsdkAloeConfig extends Config(
+  new WithBootROM ++
+  new WithPeripheryBusFrequency(BigInt(1400000000L)) ++
+  new WithExtMemSize(0x400000000L) ++ // 16GB
+  new WithoutTLMonitors ++
+  new WithUARTKey ++
+  new WithNICKey ++
+  new WithBlockDevice ++
+  new WithRocketL2TLBs(1024) ++
+  new WithPerfCounters ++
+  new WithoutClockGating ++
+  new WithDefaultMemModel ++
+  new WithDefaultFireSimBridges ++
+  new freechips.rocketchip.system.DefaultConfig ++
+  new WithInclusiveCache(
+    nBanks = 4,
+    nWays = 16,
+    capacityKB = 2048,
+    subBankingFactor = 8,
+    outerLatencyCycles = 30)
+)
+// single core config
+class FsdkAloe1xConfig extends Config(new FsdkAloeConfig)
+
+// dual core config
+class FsdkAloe2xConfig extends Config(
+  new WithNDuplicatedRocketCores(2) ++
+  new FireSimRocketChipSingleCoreConfig)
+
+// quad core config
+class FsdkAloe4xConfig extends Config(
+  new WithNDuplicatedRocketCores(4) ++
+  new FireSimRocketChipSingleCoreConfig)
+
+
 
 class FireSimBoomConfig extends Config(
   new WithBootROM ++
