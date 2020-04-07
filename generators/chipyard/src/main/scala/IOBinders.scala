@@ -3,7 +3,7 @@ package chipyard.iobinders
 import chisel3._
 
 import freechips.rocketchip.config.{Field, Config, Parameters}
-import freechips.rocketchip.diplomacy.{LazyModule}
+import freechips.rocketchip.diplomacy.{LazyModule, LazyModuleImp}
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.system._
@@ -97,6 +97,26 @@ class WithUARTAdapter extends OverrideIOBinder({
   }
 })
 
+/* handle removal of these with 
+https://github.com/chipsalliance/rocket-chip/commit/68c9b582d8cf5232f1edd105b5cf6a2f29564d71#diff-4f0d79cde64645952116839e7efd5b43L64
+*/
+trait CanHaveMasterAXI4MemPortModuleImp extends LazyModuleImp {
+   val outer: CanHaveMasterAXI4MemPort
+   val mem_axi4 = outer.mem_axi4.getWrappedValue
+   def connectSimAXIMem(){}
+}
+
+trait CanHaveMasterAXI4MMIOPortModuleImp extends LazyModuleImp {
+   val outer: CanHaveMasterAXI4MMIOPort
+   val mmio_axi4 = outer.mmio_axi4.getWrappedValue
+   def connectSimAXIMMIO(){}
+}
+
+trait CanHaveSlaveAXI4PortModuleImp extends LazyModuleImp {
+   val outer: CanHaveSlaveAXI4Port
+   val l2_frontend_bus_axi4 = outer.l2_frontend_bus_axi4.getWrappedValue
+}
+
 // DOC include start: WithSimAXIMem
 class WithSimAXIMem extends OverrideIOBinder({
   (c, r, s, top: CanHaveMasterAXI4MemPortModuleImp) => top.connectSimAXIMem(); Nil
@@ -150,7 +170,7 @@ class WithTieOffL2FBusAXI extends OverrideIOBinder({
 
 class WithTiedOffDebug extends OverrideIOBinder({
   (c, r, s, top: HasPeripheryDebugModuleImp) => {
-    Debug.tieoffDebug(top.debug, top.psd)
+    Debug.tieoffDebug(top.debug, None, Some(top.psd))(top.p)
     // tieoffDebug doesn't actually tie everything off :/
     top.debug.foreach(_.clockeddmi.foreach({ cdmi => cdmi.dmi.req.bits := DontCare }))
     Nil
@@ -174,7 +194,7 @@ class WithSimDebug extends OverrideIOBinder({
   (c, r, s, top: HasPeripheryDebugModuleImp) => {
     val dtm_success = Wire(Bool())
     top.reset := r | top.debug.map { debug => AsyncResetReg(debug.ndreset) }.getOrElse(false.B)
-    Debug.connectDebug(top.debug, top.psd, c, r, dtm_success)(top.p)
+    Debug.connectDebug(top.debug, None, top.psd, c, r, dtm_success)(top.p)
     when (dtm_success) { s := true.B }
     Nil
   }

@@ -55,15 +55,14 @@ trait HasChipyardTiles extends HasTiles
       val (tile, rocketLogicalTree) = param match {
         case r: RocketTileParams => {
           val t = LazyModule(new RocketTile(r, crossing, PriorityMuxHartIdFromSeq(rocketTileParams), logicalTreeNode))
-          (t, t.rocketLogicalTree)
+          LogicalModuleTree.add(logicalTreeNode, t.rocketLogicalTree)
+          t
         }
         case b: BoomTileParams => {
-          val t = LazyModule(new BoomTile(b, crossing, PriorityMuxHartIdFromSeq(boomTileParams), logicalTreeNode))
-          (t, t.rocketLogicalTree) // TODO FIX rocketLogicalTree is not a member of the superclass, both child classes define it separately
+          LazyModule(new BoomTile(b, crossing, PriorityMuxHartIdFromSeq(boomTileParams), logicalTreeNode))
         }
         case a: ArianeTileParams => {
-          val t = LazyModule(new ArianeTile(a, crossing, PriorityMuxHartIdFromSeq(arianeTileParams), logicalTreeNode))
-          (t, t.rocketLogicalTree) // TODO FIX rocketLogicalTree is not a member of the superclass, both child classes define it separately
+          LazyModule(new ArianeTile(a, crossing, PriorityMuxHartIdFromSeq(arianeTileParams), logicalTreeNode))
         }
       }
       connectMasterPortsToSBus(tile, crossing)
@@ -71,13 +70,12 @@ trait HasChipyardTiles extends HasTiles
 
       def treeNode: RocketTileLogicalTreeNode = new RocketTileLogicalTreeNode(rocketLogicalTree.getOMInterruptTargets)
       LogicalModuleTree.add(logicalTreeNode, rocketLogicalTree)
-
+    
       connectInterrupts(tile, debugOpt, clintOpt, plicOpt)
-
+    
       tile
     }
   }
-
 
   def coreMonitorBundles = tiles.map {
     case r: RocketTile => r.module.core.rocketImpl.coreMonitorBundle

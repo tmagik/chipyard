@@ -49,4 +49,5 @@ class TraceGenSystem(implicit p: Parameters) extends BaseSubsystem
 class TraceGenSystemModuleImp(outer: TraceGenSystem)
   extends BaseSubsystemModuleImp(outer)
   with HasTraceGenTilesModuleImp
-  with CanHaveMasterAXI4MemPortModuleImp
+// FIXME port to new way of instantiating modules
+//  with CanHaveMasterAXI4MemPortModuleImp
